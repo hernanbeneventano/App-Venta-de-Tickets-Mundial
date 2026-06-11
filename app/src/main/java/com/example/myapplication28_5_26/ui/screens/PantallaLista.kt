@@ -106,8 +106,14 @@ fun ItemPartido(partido: DTOPartidosLista, onClick: () -> Unit) {
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-            val dateStr = sdf.format(Date(partido.fecha))
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+            val outputFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+            val dateStr = try {
+                val date = inputFormat.parse(partido.fecha)
+                if (date != null) outputFormat.format(date) else partido.fecha
+            } catch (e: Exception) {
+                partido.fecha
+            }
             Text(
                 text = dateStr,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
