@@ -11,5 +11,6 @@ class MundialRepository(private val api: MundialApiService) {
 
     suspend fun fetchPartidosDetalle(): DTOPartidosDetalle{
         return api.getPartidosDetalle()[0]
-    }}
+    }
+}
 

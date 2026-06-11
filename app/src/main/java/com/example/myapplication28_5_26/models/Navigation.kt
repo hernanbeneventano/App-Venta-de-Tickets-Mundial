@@ -8,5 +8,5 @@ sealed class Screen {
     data object PartidosLista : Screen()
     
     @Serializable
-    data class PartidosDetalle(val id: Int) : Screen()
+    data class PartidosDetalle(val id: String) : Screen()
 }

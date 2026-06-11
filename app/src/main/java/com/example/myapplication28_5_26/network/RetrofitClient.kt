@@ -10,7 +10,7 @@ object RetrofitClient {
     
     val api: MundialApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("https://raw.githubusercontent.com/Iatapi/PracticaTPI/main/")
+            .baseUrl("https://6a2aada9b687a7d5cbc43133.mockapi.io/api/")
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(MundialApiService::class.java)

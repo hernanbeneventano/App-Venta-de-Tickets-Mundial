@@ -1,33 +1,25 @@
 package com.example.myapplication28_5_26.viewmodels
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication28_5_26.models.DTOPartidosDetalle
 import com.example.myapplication28_5_26.models.DTOPartidosLista
-import com.example.myapplication28_5_26.network.RetrofitClient
+import com.example.myapplication28_5_26.repository.MundialRepository
 import kotlinx.coroutines.launch
 
-sealed interface MundialUiState {
-    data class Success(val partidos: List<DTOPartidosLista>) : MundialUiState
-    data object Error : MundialUiState
-    data object Loading : MundialUiState
-}
+class MundialViewModel(private val repository: MundialRepository) : ViewModel() {
 
-sealed interface DetalleUiState {
-    data class Success(val partido: DTOPartidosDetalle) : DetalleUiState
-    data object Error : DetalleUiState
-    data object Loading : DetalleUiState
-}
+    // Lista de partidos usando mutableStateListOf como en el ejemplo del profesor
+    val partidoLista = mutableStateListOf<DTOPartidosLista>()
 
-class MundialViewModel : ViewModel() {
-    
-    var mundialUiState: MundialUiState by mutableStateOf(MundialUiState.Loading)
+    var partidoSeleccionado: DTOPartidosDetalle? by mutableStateOf(null)
         private set
 
-    var detalleUiState: DetalleUiState by mutableStateOf(DetalleUiState.Loading)
+    var isLoading by mutableStateOf(false)
         private set
 
     init {
@@ -36,27 +28,28 @@ class MundialViewModel : ViewModel() {
 
     fun getPartidos() {
         viewModelScope.launch {
-            mundialUiState = MundialUiState.Loading
-            mundialUiState = try {
-                MundialUiState.Success(RetrofitClient.api.getPartidosLista())
+            isLoading = true
+            try {
+                val nuevosPartidos = repository.fetchPartidosLista()
+                partidoLista.clear()
+                partidoLista.addAll(nuevosPartidos)
             } catch (e: Exception) {
-                MundialUiState.Error
+                // Manejar error si es necesario
+            } finally {
+                isLoading = false
             }
         }
     }
 
-    fun getPartidoById(id: Int) {
+    fun getPartidoById(id: String) {
         viewModelScope.launch {
-            detalleUiState = DetalleUiState.Loading
-            detalleUiState = try {
-                val detalle = RetrofitClient.api.getPartidosDetalle().find { it.id == id }
-                if (detalle != null) {
-                    DetalleUiState.Success(detalle)
-                } else {
-                    DetalleUiState.Error
-                }
+            isLoading = true
+            try {
+                partidoSeleccionado = repository.fetchPartidosDetalle()
             } catch (e: Exception) {
-                DetalleUiState.Error
+                // Manejar error
+            } finally {
+                isLoading = false
             }
         }
     }

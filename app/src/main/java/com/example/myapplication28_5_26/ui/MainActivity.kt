@@ -7,41 +7,33 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.myapplication28_5_26.network.RetrofitClient
+import com.example.myapplication28_5_26.repository.MundialRepository
+import com.example.myapplication28_5_26.ui.navigation.AppNavigation
 import com.example.myapplication28_5_26.ui.theme.MyApplication28526Theme
+import com.example.myapplication28_5_26.viewmodels.MundialViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Inicialización manual de las dependencias
+        val apiService = RetrofitClient.api
+        val repository = MundialRepository(apiService)
+        val viewModel = MundialViewModel(repository)
+
         enableEdgeToEdge()
         setContent {
             MyApplication28526Theme {
-                Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding),
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    // Conectamos la navegación principal
+                    AppNavigation(
+                        viewModel = viewModel,
+                        modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyApplication28526Theme {
-        Greeting("Android")
     }
 }
