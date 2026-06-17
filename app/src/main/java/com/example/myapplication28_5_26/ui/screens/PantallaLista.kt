@@ -89,7 +89,6 @@ fun ItemPartido(partido: DTOPartidosLista, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Equipo 1
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
@@ -105,7 +104,6 @@ fun ItemPartido(partido: DTOPartidosLista, onClick: () -> Unit) {
 
                 Text("VS", fontWeight = FontWeight.Black, fontSize = 18.sp)
 
-                // Equipo 2
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)

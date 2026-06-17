@@ -8,10 +8,12 @@ import kotlinx.coroutines.tasks.await
 class MundialRepository {
     private val db = FirebaseFirestore.getInstance()
 
-    // Función para traer la lista de partidos de Firebase
     suspend fun fetchPartidosLista(): List<DTOPartidosLista> {
         return try {
-            val snapshot = db.collection("partidos").get().await()
+            val snapshot = db.collection("partidos")
+                .orderBy("fecha")
+                .get()
+                .await()
             snapshot.documents.map { doc ->
                 DTOPartidosLista(
                     id = doc.id,
@@ -28,7 +30,6 @@ class MundialRepository {
         }
     }
 
-    // Función para traer el detalle de un partido de Firebase
     suspend fun fetchPartidoDetalle(id: String): DTOPartidosDetalle? {
         return try {
             val doc = db.collection("partidos").document(id).get().await()

@@ -19,12 +19,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inicialización de los ViewModels
-        // MundialRepository ya no necesita la API de Retrofit, usa Firebase internamente
         val repository = MundialRepository()
         val viewModel = MundialViewModel(repository)
         
-        // AuthViewModel
         val authViewModel: AuthViewModel by viewModels()
 
         enableEdgeToEdge()
