@@ -24,15 +24,29 @@ import com.example.myapplication28_5_26.models.DTOPartidosLista
 import com.example.myapplication28_5_26.models.Screen
 import com.example.myapplication28_5_26.viewmodels.MundialViewModel
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
+import com.example.myapplication28_5_26.viewmodels.AuthViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaLista(navController: NavController, viewModel: MundialViewModel) {
+fun PantallaLista(navController: NavController, viewModel: MundialViewModel, authViewModel: AuthViewModel) {
     val partidos = viewModel.partidoLista
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Mundial 2026") }
+                title = { Text("Mundial 2026") },
+                actions = {
+                    IconButton(onClick = {
+                        authViewModel.logout()
+                        navController.navigate(Screen.Login) {
+                            popUpTo(0)
+                        }
+                    }) {
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar Sesión")
+                    }
+                }
             )
         }
     ) { padding ->

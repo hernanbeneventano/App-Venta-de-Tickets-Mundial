@@ -13,12 +13,14 @@ import kotlinx.coroutines.launch
 
 class MundialViewModel(private val repository: MundialRepository) : ViewModel() {
 
-    // Lista de partidos usando mutableStateListOf como en el ejemplo del profesor
+    // Lista de partidos para la pantalla principal
     val partidoLista = mutableStateListOf<DTOPartidosLista>()
 
+    // Partido individual para la pantalla de detalle
     var partidoSeleccionado: DTOPartidosDetalle? by mutableStateOf(null)
         private set
 
+    // Estado de carga
     var isLoading by mutableStateOf(false)
         private set
 
@@ -34,7 +36,7 @@ class MundialViewModel(private val repository: MundialRepository) : ViewModel() 
                 partidoLista.clear()
                 partidoLista.addAll(nuevosPartidos)
             } catch (e: Exception) {
-                // Manejar error si es necesario
+                // Manejar error
             } finally {
                 isLoading = false
             }
@@ -45,7 +47,7 @@ class MundialViewModel(private val repository: MundialRepository) : ViewModel() 
         viewModelScope.launch {
             isLoading = true
             try {
-                partidoSeleccionado = repository.fetchPartidosDetalle()
+                partidoSeleccionado = repository.fetchPartidoDetalle(id)
             } catch (e: Exception) {
                 // Manejar error
             } finally {
