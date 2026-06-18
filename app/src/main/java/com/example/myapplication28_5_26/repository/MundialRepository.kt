@@ -2,18 +2,13 @@ package com.example.myapplication28_5_26.repository
 
 import com.example.myapplication28_5_26.models.DTOPartidosDetalle
 import com.example.myapplication28_5_26.models.DTOPartidosLista
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
+import com.example.myapplication28_5_26.services.FirestoreService
 
-class MundialRepository {
-    private val db = FirebaseFirestore.getInstance()
+class MundialRepository(private val firestoreService: FirestoreService) {
 
     suspend fun fetchPartidosLista(): List<DTOPartidosLista> {
         return try {
-            val snapshot = db.collection("partidos")
-                .orderBy("fecha")
-                .get()
-                .await()
+            val snapshot = firestoreService.getPartidos()
             snapshot.documents.map { doc ->
                 DTOPartidosLista(
                     id = doc.id,
@@ -32,7 +27,7 @@ class MundialRepository {
 
     suspend fun fetchPartidoDetalle(id: String): DTOPartidosDetalle? {
         return try {
-            val doc = db.collection("partidos").document(id).get().await()
+            val doc = firestoreService.getPartidoById(id)
             if (doc.exists()) {
                 DTOPartidosDetalle(
                     id = doc.id,

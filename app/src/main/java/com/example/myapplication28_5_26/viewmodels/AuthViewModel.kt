@@ -4,12 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
+import com.example.myapplication28_5_26.services.AuthService
 
 class AuthViewModel : ViewModel() {
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val authService = AuthService()
 
-    var user by mutableStateOf(auth.currentUser)
+    var user by mutableStateOf(authService.currentUser)
         private set
 
     var isLoading by mutableStateOf(false)
@@ -23,11 +23,11 @@ class AuthViewModel : ViewModel() {
         
         isLoading = true
         errorMessage = null
-        auth.createUserWithEmailAndPassword(email, pass)
+        authService.signUp(email, pass)
             .addOnCompleteListener { task ->
                 isLoading = false
                 if (task.isSuccessful) {
-                    user = auth.currentUser
+                    user = authService.currentUser
                     onResult(true)
                 } else {
                     errorMessage = mapFirebaseError(task.exception?.message)
@@ -41,11 +41,11 @@ class AuthViewModel : ViewModel() {
 
         isLoading = true
         errorMessage = null
-        auth.signInWithEmailAndPassword(email, pass)
+        authService.signIn(email, pass)
             .addOnCompleteListener { task ->
                 isLoading = false
                 if (task.isSuccessful) {
-                    user = auth.currentUser
+                    user = authService.currentUser
                     onResult(true)
                 } else {
                     errorMessage = mapFirebaseError(task.exception?.message)
@@ -55,7 +55,7 @@ class AuthViewModel : ViewModel() {
     }
 
     fun logout() {
-        auth.signOut()
+        authService.signOut()
         user = null
     }
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import com.example.myapplication28_5_26.services.FirestoreService
 import com.example.myapplication28_5_26.repository.MundialRepository
 import com.example.myapplication28_5_26.ui.navigation.AppNavigation
 import com.example.myapplication28_5_26.ui.theme.MyApplication28526Theme
@@ -19,7 +20,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val repository = MundialRepository()
+        val firestoreService = FirestoreService()
+        val repository = MundialRepository(firestoreService)
         val viewModel = MundialViewModel(repository)
         
         val authViewModel: AuthViewModel by viewModels()
