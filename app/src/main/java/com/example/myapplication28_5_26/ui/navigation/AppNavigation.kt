@@ -44,7 +44,7 @@ fun AppNavigation(
         }
         composable<Screen.PartidosDetalle> { backStackEntry ->
             val route: Screen.PartidosDetalle = backStackEntry.toRoute()
-            PantallaDetalle(navController, viewModel, route.id)
+            PantallaDetalle(navController, viewModel, authViewModel, route.id)
         }
     }
 }

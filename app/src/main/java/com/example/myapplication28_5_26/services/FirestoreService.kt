@@ -21,4 +21,17 @@ class FirestoreService {
             .get()
             .await()
     }
+
+    suspend fun registrarCompra(compra: Map<String, Any>) {
+        db.collection("compras")
+            .add(compra)
+            .await()
+    }
+
+    suspend fun getComprasByUserId(userId: String): QuerySnapshot {
+        return db.collection("compras")
+            .whereEqualTo("userId", userId)
+            .get()
+            .await()
+    }
 }
