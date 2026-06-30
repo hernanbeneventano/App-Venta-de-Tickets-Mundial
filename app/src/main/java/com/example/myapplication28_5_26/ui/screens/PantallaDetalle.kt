@@ -195,6 +195,7 @@ fun PaymentSheetContent(
     authViewModel: AuthViewModel,
     onSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
     var metodoSeleccionado by remember { mutableStateOf("Tarjeta de Crédito") }
     var numeroTarjeta by remember { mutableStateOf("") }
     var fechaVencimiento by remember { mutableStateOf("") }
@@ -260,7 +261,15 @@ fun PaymentSheetContent(
                         }
                         authViewModel.user?.uid?.let { uid ->
                             viewModel.comprarTicket(partido, uid, cantidadEntradas, metodoSeleccionado, detalle) { exito ->
-                                if (exito) onSuccess()
+                                if (exito) {
+                                    onSuccess()
+                                } else {
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        "Error al procesar la compra. Verifica los datos y que no contengan emojis.",
+                                        android.widget.Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             }
                         }
                     },

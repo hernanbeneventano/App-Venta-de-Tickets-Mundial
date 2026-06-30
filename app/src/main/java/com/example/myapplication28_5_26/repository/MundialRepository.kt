@@ -4,134 +4,104 @@ import android.util.Log
 import com.example.myapplication28_5_26.models.DTOCompra
 import com.example.myapplication28_5_26.models.DTOHistorialCompra
 import com.example.myapplication28_5_26.models.DTOPartidosDetalle
+import com.example.myapplication28_5_26.models.DTORegistroCompra
 import com.example.myapplication28_5_26.models.DTOPartidosLista
-import com.example.myapplication28_5_26.services.FirestoreService
+import com.example.myapplication28_5_26.services.MundialApiService
+import retrofit2.Response
 
-class MundialRepository(private val firestoreService: FirestoreService) {
+class MundialRepository(private val apiService: MundialApiService) {
 
     /**
-     * Guarda la compra de tickets en Firestore con validaciones de seguridad.
-     * - Nunca almacena números de tarjeta completos, solo últimos 4 dígitos
-     * - Valida caracteres peligrosos mediante Regex
-     * - Separa información de pago para mayor claridad en BD
+     * Guarda la compra de tickets a través de la API .NET 10.
      */
     suspend fun guardarCompra(compra: DTOCompra): Boolean {
         return try {
-            // Estructura base de la compra
-            val compraMap = mutableMapOf(
-                "userId" to compra.userId,
-                "partidoId" to compra.partidoId,
-                "equipo1" to compra.equipo1,
-                "equipo2" to compra.equipo2,
-                "cantidad" to compra.cantidad,
-                "total" to compra.total,
-                "metodoPago" to compra.metodoPago,
-                "fechaCompra" to compra.fechaCompra
-            )
+            var pagoTitular: String? = null
+            var pagoTarjetaMascara: String? = null
+            var pagoCvuAlias: String? = null
 
-            // Procesamos y validamos los datos de pago según el método seleccionado
             if (compra.metodoPago == "Tarjeta de Crédito") {
-                val partes = compra.detallePago.split("|")
-                val titular = partes.getOrNull(1)?.replace("Titular:", "")?.trim() ?: ""
+                // Dividimos y aplicamos trim() a cada parte para eliminar espacios invisibles
+                val partes = compra.detallePago.split("|").map { it.trim() }
+                
                 val nroCompleto = partes.getOrNull(0)?.replace("Tarjeta:", "")?.trim() ?: ""
+                val titular = partes.getOrNull(1)?.replace("Titular:", "")?.trim() ?: ""
 
-                // VALIDACIÓN CRÍTICA: Solo letras, espacios y acentos para titular
-                // Solo dígitos para número de tarjeta (previene inyección de caracteres)
                 val regexTitular = Regex("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$")
                 val regexTarjeta = Regex("^[0-9]+$")
 
                 if (!titular.matches(regexTitular) || !nroCompleto.matches(regexTarjeta)) {
-                    Log.w("MundialRepository", "Compra rechazada: caracteres no permitidos en datos de tarjeta")
+                    Log.w("MundialRepository", "Validación fallida - Titular: '$titular', Tarjeta: '$nroCompleto'")
                     return false
                 }
 
-                // Guardamos titular completo pero tarjeta enmascarada por seguridad
-                compraMap["pago_titular"] = titular
-                compraMap["pago_tarjeta_mascara"] = "**** **** **** ${nroCompleto.takeLast(4)}"
+                pagoTitular = titular
+                pagoTarjetaMascara = "**** **** **** ${nroCompleto.takeLast(4)}"
             } else {
-                // Procesamiento para Billetera Virtual
-                val cvuAlias = compra.detallePago.replace("Billetera (CVU/Alias):", "").trim()
+                val cvuAlias = compra.detallePago
+                    .replace("Billetera:", "")
+                    .replace("CVU:", "")
+                    .trim()
 
-                // VALIDACIÓN: CVU/Alias solo alfanuméricos y puntos (formatos estándar)
                 val regexCvuAlias = Regex("^[a-zA-Z0-9.]+$")
 
                 if (!cvuAlias.matches(regexCvuAlias)) {
-                    Log.w("MundialRepository", "Compra rechazada: caracteres no permitidos en CVU/Alias")
+                    Log.w("MundialRepository", "Validación fallida - CVU/Alias: '$cvuAlias'")
                     return false
                 }
-
-                compraMap["pago_cvu_alias"] = cvuAlias
+                pagoCvuAlias = cvuAlias
             }
 
-            // Registra en Firestore y devuelve true si fue exitoso
-            firestoreService.registrarCompra(compraMap)
+            val registro = DTORegistroCompra(
+                userId = compra.userId,
+                partidoId = compra.partidoId,
+                equipo1 = compra.equipo1,
+                equipo2 = compra.equipo2,
+                cantidad = compra.cantidad,
+                total = compra.total,
+                metodoPago = compra.metodoPago,
+                fechaCompra = compra.fechaCompra,
+                pago_titular = pagoTitular,
+                pago_tarjeta_mascara = pagoTarjetaMascara,
+                pago_cvu_alias = pagoCvuAlias
+            )
+
+            val response = apiService.registrarCompra(registro)
+            if (!response.isSuccessful) {
+                val errorMsg = response.errorBody()?.string()
+                Log.e("MundialRepository", "Error del servidor (Código ${response.code()}): $errorMsg")
+                return false
+            }
             true
         } catch (e: Exception) {
-            Log.e("MundialRepository", "Error al guardar compra: ${e.message}")
+            Log.e("MundialRepository", "Excepción al guardar compra: ${e.message}", e)
             false
         }
     }
 
     suspend fun fetchPartidosLista(): List<DTOPartidosLista> {
         return try {
-            val snapshot = firestoreService.getPartidos()
-            snapshot.documents.map { doc ->
-                DTOPartidosLista(
-                    id = doc.id,
-                    equipo1 = doc.getString("equipo1") ?: "",
-                    equipo2 = doc.getString("equipo2") ?: "",
-                    grupo = doc.getString("grupo") ?: "",
-                    fecha = doc.getString("fecha") ?: "",
-                    flag1 = doc.getString("flag1") ?: "",
-                    flag2 = doc.getString("flag2") ?: ""
-                )
-            }
+            apiService.getPartidos()
         } catch (e: Exception) {
-            Log.e("MundialRepository", "Error buscando partidos: ${e.message}", e)
+            Log.e("MundialRepository", "Error buscando partidos via API: ${e.message}")
             emptyList()
         }
     }
 
     suspend fun fetchPartidoDetalle(id: String): DTOPartidosDetalle? {
         return try {
-            val doc = firestoreService.getPartidoById(id)
-            if (doc.exists()) {
-                DTOPartidosDetalle(
-                    id = doc.id,
-                    equipo1 = doc.getString("equipo1") ?: "",
-                    equipo2 = doc.getString("equipo2") ?: "",
-                    grupo = doc.getString("grupo") ?: "",
-                    fecha = doc.getString("fecha") ?: "",
-                    flag1 = doc.getString("flag1") ?: "",
-                    flag2 = doc.getString("flag2") ?: "",
-                    estadio = doc.getString("estadio") ?: "Estadio Mundialista",
-                    precio = doc.getString("precio") ?: "100"
-                )
-            } else null
+            apiService.getPartidoById(id)
         } catch (e: Exception) {
+            Log.e("MundialRepository", "Error buscando detalle via API: ${e.message}")
             null
         }
     }
 
-    /**
-     * Recupera el historial de compras de un usuario específico.
-     */
     suspend fun getHistorialCompras(userId: String): List<DTOHistorialCompra> {
         return try {
-            val snapshot = firestoreService.getComprasByUserId(userId)
-            snapshot.documents.map { doc ->
-                DTOHistorialCompra(
-                    id = doc.id,
-                    equipo1 = doc.getString("equipo1") ?: "N/A",
-                    equipo2 = doc.getString("equipo2") ?: "N/A",
-                    cantidad = doc.getLong("cantidad")?.toInt() ?: 0,
-                    total = doc.getDouble("total") ?: 0.0,
-                    fechaCompra = doc.getLong("fechaCompra") ?: 0L,
-                    metodoPago = doc.getString("metodoPago") ?: "Desconocido"
-                )
-            }
+            apiService.getComprasByUserId(userId)
         } catch (e: Exception) {
-            Log.e("MundialRepository", "Error al obtener historial: ${e.message}")
+            Log.e("MundialRepository", "Error al obtener historial via API: ${e.message}")
             emptyList()
         }
     }

@@ -80,6 +80,10 @@ dependencies {
     // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    // Retrofit para conectar con la API .NET 10
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
