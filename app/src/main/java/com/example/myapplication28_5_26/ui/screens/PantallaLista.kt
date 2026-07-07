@@ -29,10 +29,34 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
 import com.example.myapplication28_5_26.viewmodels.AuthViewModel
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaLista(navController: NavController, viewModel: MundialViewModel, authViewModel: AuthViewModel) {
     val partidos = viewModel.partidoLista
+    val listState = rememberLazyListState()
+
+    // Detectar cuando el usuario está cerca del final de la lista
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            lastVisibleItem != null && lastVisibleItem.index >= partidos.size - 2
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore.value) {
+        if (shouldLoadMore.value && !viewModel.isEndReached) {
+            viewModel.getPartidos()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -56,19 +80,84 @@ fun PantallaLista(navController: NavController, viewModel: MundialViewModel, aut
             )
         }
     ) { padding ->
-        if (viewModel.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Barra de Búsqueda
+            OutlinedTextField(
+                value = viewModel.searchQuery,
+                onValueChange = { 
+                    viewModel.searchQuery = it
+                    viewModel.refreshPartidos()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("Buscar equipo...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (viewModel.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { 
+                            viewModel.searchQuery = ""
+                            viewModel.refreshPartidos()
+                        }) {
+                            Icon(Icons.Default.Close, contentDescription = "Limpiar")
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+
+            // Selector de Grupos (Chips)
+            val grupos = listOf("TODOS", "A", "B", "C", "D", "E", "F", "G", "H", "Dieciseisavos", "Eliminatorias", "Cuartos de final")
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(grupos) { grupo ->
+                    FilterChip(
+                        selected = viewModel.selectedGrupo == grupo,
+                        onClick = { 
+                            viewModel.selectedGrupo = grupo
+                            viewModel.refreshPartidos()
+                        },
+                        label = { Text(grupo) }
+                    )
+                }
             }
-        } else {
+
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
+                state = listState,
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (partidos.isEmpty() && !viewModel.isLoading) {
+                    item {
+                        Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("No se encontraron partidos", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+
                 items(partidos) { partido ->
                     ItemPartido(partido) {
                         navController.navigate(Screen.PartidosDetalle(partido.id))
+                    }
+                }
+
+                if (viewModel.isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                        }
                     }
                 }
             }
@@ -84,11 +173,30 @@ fun ItemPartido(partido: DTOPartidosLista, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Grupo ${partido.grupo}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Grupo ${partido.grupo}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (partido.estado != "pendiente") {
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = if (partido.estado == "finalizado") MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Text(
+                            text = partido.estado.uppercase(),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -108,7 +216,18 @@ fun ItemPartido(partido: DTOPartidosLista, onClick: () -> Unit) {
                     Text(partido.equipo1, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
 
-                Text("VS", fontWeight = FontWeight.Black, fontSize = 18.sp)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (partido.estado == "finalizado") {
+                        Text(
+                            text = "${partido.goles1} - ${partido.goles2}",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 22.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Text("VS", fontWeight = FontWeight.Black, fontSize = 18.sp)
+                    }
+                }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                     AsyncImage(
@@ -140,6 +259,20 @@ fun ItemPartido(partido: DTOPartidosLista, onClick: () -> Unit) {
                 text = dateStr,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = partido.estadio,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "Desde $${partido.precio}",
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.secondary
             )
         }
     }

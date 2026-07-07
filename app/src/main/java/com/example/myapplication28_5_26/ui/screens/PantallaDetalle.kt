@@ -123,6 +123,19 @@ fun PantallaDetalle(
                     color = MaterialTheme.colorScheme.primary
                 )
                 
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = if (partido.estado == "finalizado") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = partido.estado.uppercase(),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
@@ -142,7 +155,16 @@ fun PantallaDetalle(
                         Text(partido.equipo1, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     }
 
-                    Text("VS", fontWeight = FontWeight.Black, fontSize = 24.sp)
+                    if (partido.estado == "finalizado") {
+                        Text(
+                            text = "${partido.goles1} - ${partido.goles2}",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 32.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Text("VS", fontWeight = FontWeight.Black, fontSize = 24.sp)
+                    }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         AsyncImage(
@@ -176,12 +198,14 @@ fun PantallaDetalle(
 
                 Button(
                     onClick = { showPaymentSheet = true },
+                    enabled = partido.estado != "finalizado",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = MaterialTheme.shapes.medium
                 ) {
-                    Text("Comprar Tickets", fontSize = 18.sp)
+                    val buttonText = if (partido.estado == "finalizado") "Venta Cerrada" else "Comprar Tickets"
+                    Text(buttonText, fontSize = 18.sp)
                 }
             }
         }

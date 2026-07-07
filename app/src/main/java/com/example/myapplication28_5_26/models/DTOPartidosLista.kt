@@ -10,5 +10,11 @@ data class DTOPartidosLista(
     val grupo: String,
     val fecha: String,
     val flag1: String,
-    val flag2: String
+    val flag2: String,
+    val estadio: String = "",
+    val precio: String = "",
+    val estado: String = "pendiente",
+    val goles1: Int = 0,
+    val goles2: Int = 0,
+    val resultado: String = ""
 )
