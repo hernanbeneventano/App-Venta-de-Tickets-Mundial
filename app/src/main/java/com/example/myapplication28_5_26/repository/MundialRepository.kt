@@ -57,6 +57,9 @@ class MundialRepository(private val apiService: MundialApiService) {
                 partidoId = compra.partidoId,
                 equipo1 = compra.equipo1,
                 equipo2 = compra.equipo2,
+                flag1 = compra.flag1,
+                flag2 = compra.flag2,
+                estadio = compra.estadio,
                 cantidad = compra.cantidad,
                 total = compra.total,
                 metodoPago = compra.metodoPago,
@@ -79,9 +82,9 @@ class MundialRepository(private val apiService: MundialApiService) {
         }
     }
 
-    suspend fun fetchPartidosLista(): List<DTOPartidosLista> {
+    suspend fun fetchPartidosLista(page: Int? = null, pageSize: Int? = null, grupo: String? = null, equipo: String? = null): List<DTOPartidosLista> {
         return try {
-            apiService.getPartidos()
+            apiService.getPartidos(page, pageSize, grupo, equipo)
         } catch (e: Exception) {
             Log.e("MundialRepository", "Error buscando partidos via API: ${e.message}")
             emptyList()
@@ -103,6 +106,16 @@ class MundialRepository(private val apiService: MundialApiService) {
         } catch (e: Exception) {
             Log.e("MundialRepository", "Error al obtener historial via API: ${e.message}")
             emptyList()
+        }
+    }
+
+    suspend fun eliminarCompra(id: String): Boolean {
+        return try {
+            val response = apiService.eliminarCompra(id)
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("MundialRepository", "Error al eliminar compra via API: ${e.message}")
+            false
         }
     }
 }
