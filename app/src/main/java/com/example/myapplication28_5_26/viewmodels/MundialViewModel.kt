@@ -151,4 +151,18 @@ class MundialViewModel(private val repository: MundialRepository) : ViewModel() 
             }
         }
     }
+
+    fun autorizarSesionWeb(sessionId: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                val exito = repository.autorizarQr(sessionId)
+                onResult(exito)
+            } catch (e: Exception) {
+                onResult(false)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
 }

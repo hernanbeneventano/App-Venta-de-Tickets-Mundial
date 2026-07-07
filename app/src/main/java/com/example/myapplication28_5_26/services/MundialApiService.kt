@@ -4,6 +4,7 @@ import com.example.myapplication28_5_26.models.DTOHistorialCompra
 import com.example.myapplication28_5_26.models.DTORegistroCompra
 import com.example.myapplication28_5_26.models.DTOPartidosDetalle
 import com.example.myapplication28_5_26.models.DTOPartidosLista
+import com.example.myapplication28_5_26.models.DTOQrAuthRequest
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -34,4 +35,7 @@ interface MundialApiService {
 
     @DELETE("api/compras/{id}")
     suspend fun eliminarCompra(@Path("id") id: String): Response<ResponseBody>
+
+    @POST("api/auth/qr-authorize")
+    suspend fun autorizarQrSession(@Body request: DTOQrAuthRequest): Response<ResponseBody>
 }

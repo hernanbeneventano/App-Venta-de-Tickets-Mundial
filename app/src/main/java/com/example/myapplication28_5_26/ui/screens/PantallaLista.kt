@@ -24,6 +24,11 @@ import com.example.myapplication28_5_26.models.DTOPartidosLista
 import com.example.myapplication28_5_26.models.Screen
 import com.example.myapplication28_5_26.viewmodels.MundialViewModel
 
+import androidx.compose.material.icons.filled.QrCodeScanner
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
+import androidx.activity.compose.rememberLauncherForActivityResult
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
@@ -43,6 +48,21 @@ import androidx.compose.material.icons.filled.Close
 fun PantallaLista(navController: NavController, viewModel: MundialViewModel, authViewModel: AuthViewModel) {
     val partidos = viewModel.partidoLista
     val listState = rememberLazyListState()
+    val context = LocalContext.current
+
+    // Launcher para el escáner de QR
+    val qrLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
+        if (result.contents != null) {
+            val sessionId = result.contents
+            viewModel.autorizarSesionWeb(sessionId) { exito ->
+                if (exito) {
+                    android.widget.Toast.makeText(context, "¡Sesión Web autorizada!", android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    android.widget.Toast.makeText(context, "Error al autorizar sesión", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     // Detectar cuando el usuario está cerca del final de la lista
     val shouldLoadMore = remember {
@@ -63,6 +83,16 @@ fun PantallaLista(navController: NavController, viewModel: MundialViewModel, aut
             CenterAlignedTopAppBar(
                 title = { Text("Mundial 2026") },
                 actions = {
+                    IconButton(onClick = {
+                        val options = ScanOptions()
+                        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                        options.setPrompt("Escaneá el código de la Web")
+                        options.setBeepEnabled(true)
+                        options.setOrientationLocked(false)
+                        qrLauncher.launch(options)
+                    }) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Sincronizar con Web")
+                    }
                     IconButton(onClick = {
                         navController.navigate(Screen.Historial)
                     }) {

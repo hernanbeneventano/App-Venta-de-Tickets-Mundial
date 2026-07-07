@@ -6,6 +6,7 @@ import com.example.myapplication28_5_26.models.DTOHistorialCompra
 import com.example.myapplication28_5_26.models.DTOPartidosDetalle
 import com.example.myapplication28_5_26.models.DTORegistroCompra
 import com.example.myapplication28_5_26.models.DTOPartidosLista
+import com.example.myapplication28_5_26.models.DTOQrAuthRequest
 import com.example.myapplication28_5_26.services.MundialApiService
 import retrofit2.Response
 
@@ -115,6 +116,19 @@ class MundialRepository(private val apiService: MundialApiService) {
             response.isSuccessful
         } catch (e: Exception) {
             Log.e("MundialRepository", "Error al eliminar compra via API: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun autorizarQr(sessionId: String): Boolean {
+        return try {
+            val response = apiService.autorizarQrSession(DTOQrAuthRequest(sessionId))
+            if (!response.isSuccessful) {
+                Log.e("MundialRepository", "Error autorizando QR: ${response.code()}")
+            }
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("MundialRepository", "Excepción autorizando QR: ${e.message}")
             false
         }
     }
