@@ -108,7 +108,7 @@ fun PantallaLista(navController: NavController, viewModel: MundialViewModel, aut
             )
 
             // Selector de Grupos (Chips)
-            val grupos = listOf("TODOS", "A", "B", "C", "D", "E", "F", "G", "H", "Dieciseisavos", "Eliminatorias", "Cuartos de final")
+            val grupos = listOf("TODOS", "A", "B", "C", "D", "E", "F", "G", "H", "Dieciseisavos", "Octavos de final", "Cuartos de final")
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
