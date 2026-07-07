@@ -9,6 +9,7 @@ import androidx.navigation.toRoute
 import com.example.myapplication28_5_26.models.Screen
 import com.example.myapplication28_5_26.ui.screens.LoginScreen
 import com.example.myapplication28_5_26.ui.screens.PantallaDetalle
+import com.example.myapplication28_5_26.ui.screens.PantallaHistorial
 import com.example.myapplication28_5_26.ui.screens.PantallaLista
 import com.example.myapplication28_5_26.ui.screens.RegisterScreen
 import com.example.myapplication28_5_26.viewmodels.AuthViewModel
@@ -42,9 +43,12 @@ fun AppNavigation(
         composable<Screen.PartidosLista> {
             PantallaLista(navController, viewModel, authViewModel)
         }
+        composable<Screen.Historial> {
+            PantallaHistorial(navController, viewModel, authViewModel)
+        }
         composable<Screen.PartidosDetalle> { backStackEntry ->
             val route: Screen.PartidosDetalle = backStackEntry.toRoute()
-            PantallaDetalle(navController, viewModel, route.id)
+            PantallaDetalle(navController, viewModel, authViewModel, route.id)
         }
     }
 }

@@ -4,12 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.myapplication28_5_26.services.AuthService
+import androidx.lifecycle.viewModelScope
+import com.example.myapplication28_5_26.repository.AuthRepository
+import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
-    private val authService = AuthService()
+class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
-    var user by mutableStateOf(authService.currentUser)
+    var user by mutableStateOf(repository.currentUser)
         private set
 
     var isLoading by mutableStateOf(false)
@@ -21,68 +22,62 @@ class AuthViewModel : ViewModel() {
     fun register(email: String, pass: String, onResult: (Boolean) -> Unit) {
         if (!validateInput(email, pass)) return
         
-        isLoading = true
-        errorMessage = null
-        authService.signUp(email, pass)
-            .addOnCompleteListener { task ->
-                isLoading = false
-                if (task.isSuccessful) {
-                    user = authService.currentUser
-                    onResult(true)
-                } else {
-                    errorMessage = mapFirebaseError(task.exception?.message)
-                    onResult(false)
-                }
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            val result = repository.register(email, pass)
+            isLoading = false
+            
+            result.onSuccess {
+                user = it
+                onResult(true)
+            }.onFailure {
+                errorMessage = it.message
+                onResult(false)
             }
+        }
     }
 
     fun login(email: String, pass: String, onResult: (Boolean) -> Unit) {
         if (!validateInput(email, pass)) return
 
-        isLoading = true
-        errorMessage = null
-        authService.signIn(email, pass)
-            .addOnCompleteListener { task ->
-                isLoading = false
-                if (task.isSuccessful) {
-                    user = authService.currentUser
-                    onResult(true)
-                } else {
-                    errorMessage = mapFirebaseError(task.exception?.message)
-                    onResult(false)
-                }
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            val result = repository.login(email, pass)
+            isLoading = false
+            
+            result.onSuccess {
+                user = it
+                onResult(true)
+            }.onFailure {
+                errorMessage = it.message
+                onResult(false)
             }
+        }
     }
 
     fun logout() {
-        authService.signOut()
+        repository.logout()
         user = null
     }
 
     private fun validateInput(email: String, pass: String): Boolean {
+        // Validar que campos no estén vacíos
         if (email.isBlank() || pass.isBlank()) {
             errorMessage = "Por favor, completa todos los campos"
             return false
         }
+        // Validar formato de email usando regex de Android
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             errorMessage = "El formato del correo no es válido"
             return false
         }
+        // Validar longitud mínima de contraseña (estándar de seguridad)
         if (pass.length < 6) {
             errorMessage = "La contraseña debe tener al menos 6 caracteres"
             return false
         }
         return true
-    }
-
-    private fun mapFirebaseError(message: String?): String {
-        return when {
-            message == null -> "Ocurrió un error desconocido"
-            message.contains("user-not-found") -> "El usuario no está registrado"
-            message.contains("wrong-password") -> "La contraseña es incorrecta"
-            message.contains("email-already-in-use") -> "Este correo ya está en uso"
-            message.contains("network-request-failed") -> "Error de conexión a internet"
-            else -> "Error: $message"
-        }
     }
 }

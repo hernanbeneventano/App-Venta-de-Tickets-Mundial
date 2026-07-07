@@ -12,6 +12,9 @@ sealed class Screen {
 
     @Serializable
     data object PartidosLista : Screen()
+
+    @Serializable
+    data object Historial : Screen()
     
     @Serializable
     data class PartidosDetalle(val id: String) : Screen()

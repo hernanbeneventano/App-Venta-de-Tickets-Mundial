@@ -26,6 +26,7 @@ import com.example.myapplication28_5_26.viewmodels.MundialViewModel
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.History
 import com.example.myapplication28_5_26.viewmodels.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,6 +39,11 @@ fun PantallaLista(navController: NavController, viewModel: MundialViewModel, aut
             CenterAlignedTopAppBar(
                 title = { Text("Mundial 2026") },
                 actions = {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.Historial)
+                    }) {
+                        Icon(Icons.Default.History, contentDescription = "Historial")
+                    }
                     IconButton(onClick = {
                         authViewModel.logout()
                         navController.navigate(Screen.Login) {
